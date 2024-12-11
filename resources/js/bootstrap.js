@@ -7,14 +7,14 @@ window.Pusher = Pusher;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-window.Pusher = Pusher;
+// window.Pusher = Pusher;
 
-window.Echo = new Echo({
-    broadcaster: 'pusher',
-    key: window.PUSHER_APP_KEY,
-    cluster: window.PUSHER_APP_CLUSTER,
-    encrypted: true,
-});
+// window.Echo = new Echo({
+//     broadcaster: 'pusher',
+//     key: window.PUSHER_APP_KEY,
+//     cluster: window.PUSHER_APP_CLUSTER,
+//     encrypted: true,
+// });
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening

@@ -67,8 +67,7 @@ export const listenForProductUpdates = () => {
   window.Echo.channel('products')
     .listen('.product-added', (event) => {
       console.log('New product added:', event.product);
-
-      // Retrieve the current products from localStorage (if any)
+      
       let products = JSON.parse(localStorage.getItem('products')) || [];
       
       products.push(event.product);

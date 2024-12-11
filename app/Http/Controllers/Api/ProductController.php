@@ -33,7 +33,7 @@ class ProductController extends Controller
             'user_id' => Auth::user()->id, // Set the user ID based on the authenticated user
         ]);
 
-        event(new \App\Events\ProductAdded($product));
+        // event(new \App\Events\ProductAdded($product));
 
         return response()->json(['product' => $product], 201);
     }
