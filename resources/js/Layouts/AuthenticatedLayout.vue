@@ -1,198 +1,184 @@
 <script setup>
-import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import Dropdown from '@/Components/Dropdown.vue';
-import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
+import { apiService,listenForProductUpdates } from '@/apiService';
+import InventoryForm from '@/Components/InventoryForm.vue';
+import Modal from '@/Components/Inventory-Modal.vue';
 
-const showingNavigationDropdown = ref(false);
+// Reactive state
+const activeTab = ref('clients'); // Default tab
+const clientsHistory = ref([]);
+const inventoryHistory = ref([]);
+const isModalVisible = ref(false);
+const editingProduct = ref(null); // To track product being edited
+
+// Fetch data from API
+const fetchClientsHistory = async () => {
+  try {
+    clientsHistory.value = await apiService.fetchClientsHistory();
+  } catch (error) {
+    console.error('Failed to fetch clients:', error);
+  }
+};
+
+const fetchInventoryHistory = async () => {
+  try {
+    inventoryHistory.value = await apiService.fetchInventoryHistory();
+  } catch (error) {
+    console.error('Failed to fetch inventory:', error);
+  }
+};
+
+// Fetch all data on component mount
+onMounted(() => {
+  fetchClientsHistory();
+  fetchInventoryHistory();  
+  listenForProductUpdates();
+});
+
+// Open modal for adding or editing product
+const openModal = (product = null) => {
+  editingProduct.value = product;
+  isModalVisible.value = true;
+};
+
+// Handle product submission
+const handleProductSubmit = async () => {
+  fetchInventoryHistory(); // Refresh inventory after submission
+  isModalVisible.value = false;
+};
+
+// Handle product deletion
+const deleteProduct = async (productId) => {
+  try {
+    await apiService.deleteProduct(productId);
+    alert('Product deleted successfully');
+    fetchInventoryHistory();
+  } catch (error) {
+    alert('Failed to delete product: ' + (error.response?.data?.message || error.message));
+  }
+};
+
+// Tab labels
+const tabViews = {
+  clients: 'Clients',
+  inventoryHistory: 'Products',
+};
 </script>
 
 <template>
-    <div>
-        <div class="min-h-screen bg-gray-100">
-            <nav
-                class="border-b border-gray-100 bg-white"
-            >
-                <!-- Primary Navigation Menu -->
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-16 justify-between">
-                        <div class="flex">
-                            <!-- Logo -->
-                            <div class="flex shrink-0 items-center">
-                                <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800"
-                                    />
-                                </Link>
-                            </div>
-
-                            <!-- Navigation Links -->
-                            <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
-                            >
-                                <NavLink
-                                    :href="route('dashboard')"
-                                    :active="route().current('dashboard')"
-                                >
-                                    Dashboard
-                                </NavLink>
-                            </div>
-                        </div>
-
-                        <div class="hidden sm:ms-6 sm:flex sm:items-center">
-                            <!-- Settings Dropdown -->
-                            <div class="relative ms-3">
-                                <Dropdown align="right" width="48">
-                                    <template #trigger>
-                                        <span class="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {{ $page.props.auth.user.name }}
-
-                                                <svg
-                                                    class="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clip-rule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </template>
-
-                                    <template #content>
-                                        <DropdownLink
-                                            :href="route('profile.edit')"
-                                        >
-                                            Profile
-                                        </DropdownLink>
-                                        <DropdownLink
-                                            :href="route('logout')"
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </DropdownLink>
-                                    </template>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <!-- Hamburger -->
-                        <div class="-me-2 flex items-center sm:hidden">
-                            <button
-                                @click="
-                                    showingNavigationDropdown =
-                                        !showingNavigationDropdown
-                                "
-                                class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        :class="{
-                                            hidden: showingNavigationDropdown,
-                                            'inline-flex':
-                                                !showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        :class="{
-                                            hidden: !showingNavigationDropdown,
-                                            'inline-flex':
-                                                showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Responsive Navigation Menu -->
-                <div
-                    :class="{
-                        block: showingNavigationDropdown,
-                        hidden: !showingNavigationDropdown,
-                    }"
-                    class="sm:hidden"
-                >
-                    <div class="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            :href="route('dashboard')"
-                            :active="route().current('dashboard')"
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <!-- Responsive Settings Options -->
-                    <div
-                        class="border-t border-gray-200 pb-1 pt-4"
-                    >
-                        <div class="px-4">
-                            <div
-                                class="text-base font-medium text-gray-800"
-                            >
-                                {{ $page.props.auth.user.name }}
-                            </div>
-                            <div class="text-sm font-medium text-gray-500">
-                                {{ $page.props.auth.user.email }}
-                            </div>
-                        </div>
-
-                        <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.edit')">
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                :href="route('logout')"
-                                method="post"
-                                as="button"
-                            >
-                                Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- Page Heading -->
-            <header
-                class="bg-white shadow"
-                v-if="$slots.header"
-            >
-                <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                    <slot name="header" />
-                </div>
-            </header>
-
-            <!-- Page Content -->
-            <main>
-                <slot />
-            </main>
+  <div class="min-h-screen bg-gray-100">
+    <!-- Navbar -->
+    <nav class="bg-white shadow">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center">
+            <span class="text-2xl font-bold text-indigo-600">Inventory App</span>
+          </div>
         </div>
+      </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="bg-white shadow">
+      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl font-bold text-gray-900">Inventory Management</h1>
+      </div>
+    </header>
+
+    <!-- Tabs and Content -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <!-- Tab Navigation -->
+      <div class="flex space-x-4 mb-6">
+        <button
+          v-for="(label, key) in tabViews"
+          :key="key"
+          @click="activeTab = key"
+          :class="{
+            'px-4 py-2 rounded-t-lg font-medium text-sm': true,
+            'bg-indigo-100 text-indigo-600': activeTab === key,
+            'bg-gray-200 text-gray-700': activeTab !== key,
+          }"
+        >
+          {{ label }}
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="bg-white rounded-lg shadow px-6 py-4">
+        <!-- Clients History -->
+        <div v-if="activeTab === 'clients'">
+          <h2 class="text-lg font-medium text-gray-900 mb-4">Clients</h2>
+          <table class="min-w-full table-auto border border-gray-200 rounded">
+            <thead class="bg-gray-100 text-left text-gray-600">
+              <tr>
+                <th class="py-2 px-4">Name</th>
+                <th class="py-2 px-4">Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="client in clientsHistory" :key="client.email" class="border-b border-gray-200">
+                <td class="py-2 px-4">{{ client.name }}</td>
+                <td class="py-2 px-4">{{ client.email }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Inventory History -->
+        <div v-if="activeTab === 'inventoryHistory'">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-medium text-gray-900">Products</h2>
+            <button
+              @click="openModal()"
+              class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
+            >
+              New Product
+            </button>
+          </div>
+          <table class="min-w-full table-auto border border-gray-200 rounded">
+            <thead class="bg-gray-100 text-left text-gray-600">
+              <tr>
+                <th class="py-2 px-4">Item</th>
+                <th class="py-2 px-4">Quantity</th>
+                <th class="py-2 px-4">Date</th>
+                <th class="py-2 px-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in inventoryHistory" :key="item.id" class="border-b border-gray-200">
+                <td class="py-2 px-4">{{ item.name }}</td>
+                <td class="py-2 px-4">{{ item.quantity }}</td>
+                <td class="py-2 px-4">{{ item.date }}</td>
+                <td class="py-2 px-4">
+                  <button
+                    @click="openModal(item)"
+                    class="bg-yellow-500 text-white px-2 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    @click="deleteProduct(item.id)"
+                    class="bg-red-500 text-white px-2 py-1 rounded ml-2"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
+
+    <!-- Modal -->
+    <Modal :isVisible="isModalVisible" :product="editingProduct" @update:isVisible="isModalVisible = $event">
+      <template #default="{ product }">
+        <InventoryForm :product="product" @submit="handleProductSubmit" />
+      </template>
+    </Modal>
+  </div>
 </template>
+
+<style scoped>
+/* Add any additional styling as needed */
+</style>

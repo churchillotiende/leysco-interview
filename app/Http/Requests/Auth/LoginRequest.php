@@ -5,6 +5,7 @@ namespace App\Http\Requests\Auth;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -51,6 +52,35 @@ class LoginRequest extends FormRequest
 
         RateLimiter::clear($this->throttleKey());
     }
+    /**
+ * Attempt to authenticate the request's credentials and issue an API token.
+ *
+ * @throws \Illuminate\Validation\ValidationException
+ */
+// public function authenticate(): string
+// {
+//     $this->ensureIsNotRateLimited();
+
+//     // Find the user by their email
+//     $user = \App\Models\User::where('email', $this->input('email'))->first();
+
+//     if (! $user || ! Hash::check($this->input('password'), $user->password)) {
+//         RateLimiter::hit($this->throttleKey());
+
+//         throw ValidationException::withMessages([
+//             'email' => trans('auth.failed'),
+//         ]);
+//     }
+
+//     // Clear rate limiter after successful login
+//     RateLimiter::clear($this->throttleKey());
+
+//     // Generate a new Passport token for the user
+//     $token = $user->createToken('API Token')->accessToken;
+
+//     return $token;
+// }
+
 
     /**
      * Ensure the login request is not rate limited.
